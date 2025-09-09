@@ -33,6 +33,7 @@
             text-align: left;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
         td {
             padding: 10px;
@@ -40,10 +41,6 @@
         }
         tr:hover {
             background-color: #f8f9fa;
-        }
-        .week-header {
-            background-color: #e9ecef;
-            font-weight: bold;
         }
         .phase-header {
             background-color: #28a745;
@@ -64,675 +61,166 @@
             font-weight: bold;
             color: #007bff;
         }
-        .export-btn {
-            background-color: #28a745;
+        .completed-row {
+            background-color: #d4edda !important;
+            opacity: 0.8;
+        }
+        .completed-row td {
+            text-decoration: line-through;
+        }
+        .checkbox-cell {
+            text-align: center;
+            width: 40px;
+        }
+        .week-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background-color: #e9ecef;
+            border-radius: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .control-buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
             padding: 10px 20px;
+            margin: 5px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin: 20px auto;
-            display: block;
+            font-size: 16px;
+            transition: all 0.3s;
         }
-        .export-btn:hover {
+        .btn-export {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-export:hover {
             background-color: #218838;
         }
-        .race-schedule {
-            background-color: #fff3cd;
+        .btn-save {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn-save:hover {
+            background-color: #138496;
+        }
+        .btn-clear {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-clear:hover {
+            background-color: #c82333;
+        }
+        .stats-box {
+            background-color: white;
             padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 5px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        script {
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <h1>Red One Backyard Ultra Training Plan</h1>
-    <h2>Athlete: 56yo | Target: 15 May 2026 | Cheltenham Racecourse</h2>
+    <h2>Target: 15 May 2026 | Cheltenham Racecourse</h2>
     
-    <div class="race-schedule">
-        <h2>Race Schedule</h2>
-        <ul>
-            <li><strong>C-Races (Training Through):</strong>
-                <ul>
-                    <li>Track Wars XXVI - 2 May 2025 (6-hour timed)</li>
-                    <li>Phoenix Track Event - 12 September 2025 (6-hour)</li>
-                    <li>Centurion Autumn 100 - 18 October 2025 (50-100km training run)</li>
-                    <li>Wendover Woods 50 - 15 November 2025 (50 miles/10 loops)</li>
-                </ul>
-            </li>
-            <li><strong>B-Race Option:</strong> Phoenix 12-in-12 (26 Mar - 6 Apr 2026)</li>
-            <li><strong>A-Race:</strong> Red One Backyard Ultra (15 May 2026)</li>
-        </ul>
+    <div class="stats-box">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="weeksComplete">0/36</div>
+                <div class="stat-label">Weeks Complete</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalHours">0</div>
+                <div class="stat-label">Hours Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="daysToRace">-</div>
+                <div class="stat-label">Days to Race</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentWeek">-</div>
+                <div class="stat-label">Current Week</div>
+            </div>
+        </div>
     </div>
     
-    <button class="export-btn" onclick="exportTableToCSV('training_plan.csv')">Export to CSV</button>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressBar">0% Complete</div>
+    </div>
+    
+    <div class="control-buttons">
+        <button class="btn btn-export" onclick="exportToCSV()">📊 Export to CSV</button>
+        <button class="btn btn-save" onclick="downloadProgress()">💾 Download Progress</button>
+        <button class="btn btn-save" onclick="uploadProgress()">📂 Load Progress</button>
+        <button class="btn btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+        <button class="btn btn-save" onclick="refreshTable()">🔄 Refresh Table</button>
+    </div>
     
     <table id="trainingTable">
         <thead>
             <tr>
+                <th>✓</th>
                 <th>Week</th>
-                <th>Date Range</th>
+                <th>Dates</th>
                 <th>Phase</th>
-                <th>Total Hours</th>
-                <th>Monday</th>
-                <th>Tuesday</th>
-                <th>Wednesday</th>
-                <th>Thursday</th>
-                <th>Friday</th>
-                <th>Saturday</th>
-                <th>Sunday</th>
-                <th>Notes</th>
+                <th>Hours</th>
+                <th>Workout 1</th>
+                <th>Workout 2</th>
+                <th>Workout 3</th>
+                <th>Workout 4</th>
+                <th>Workout 5</th>
+                <th>Workout 6</th>
+                <th>Workout 7</th>
+                <th>Key Focus</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- PHASE 1: AEROBIC BASE BUILDING -->
-            <tr class="phase-header">
-                <td colspan="12">PHASE 1: AEROBIC BASE BUILDING (Weeks 1-12)</td>
-            </tr>
-            
-            <tr class="test-week">
-                <td>1</td>
-                <td>8-14 Sep 2025</td>
-                <td>Testing</td>
-                <td class="hours">6.0</td>
-                <td>REST</td>
-                <td>60min Easy Z1 nose breathing</td>
-                <td>60min Easy Z1-Z2</td>
-                <td>REST</td>
-                <td>60min Recovery Z1</td>
-                <td>60min MAF Test (8x800m @145bpm)</td>
-                <td>AeT Drift Test 60min @145bpm</td>
-                <td>Baseline testing week</td>
-            </tr>
-            
-            <tr>
-                <td>2</td>
-                <td>15-21 Sep 2025</td>
-                <td>Base</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min Z1 + 6x30s hill sprints</td>
-                <td>60min Z1 continuous</td>
-                <td>REST/30min walk</td>
-                <td>60min Z2 @145-150bpm</td>
-                <td>2:00 Fasted morning Z1</td>
-                <td>2:00 Long Z1(70%) + Z2(30%)</td>
-                <td>Fat adaptation focus</td>
-            </tr>
-            
-            <tr>
-                <td>3</td>
-                <td>22-28 Sep 2025</td>
-                <td>Base</td>
-                <td class="hours">7.5</td>
-                <td>REST</td>
-                <td>60min Hills 8x2min Z3</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>1:15 Z2 @150-155bpm</td>
-                <td>2:00 Backyard Sim #1 (4 yards)</td>
-                <td>2:15 Progressive (90min Z1, 45min Z2)</td>
-                <td>First backyard practice</td>
-            </tr>
-            
-            <tr>
-                <td>4</td>
-                <td>29 Sep-5 Oct 2025</td>
-                <td>Base</td>
-                <td class="hours">8.0</td>
-                <td>REST</td>
-                <td>60min ME hill bounds + Z1</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>60min AnT Test 30min @168bpm</td>
-                <td>2:30 Time on feet Z1 + hiking</td>
-                <td>2:30 Long Z1-Z2 varied terrain</td>
-                <td>AnT testing</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>5</td>
-                <td>6-12 Oct 2025</td>
-                <td>Recovery</td>
-                <td class="hours">6.0</td>
-                <td>REST</td>
-                <td>45min Easy + 4x20s strides</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>45min Recovery</td>
-                <td>2:00 MAF Test + easy</td>
-                <td>1:30 Easy Z1</td>
-                <td>Recovery & MAF test</td>
-            </tr>
-            
-            <tr>
-                <td>6</td>
-                <td>13-19 Oct 2025</td>
-                <td>Base/C-Race</td>
-                <td class="hours">8.5</td>
-                <td>REST</td>
-                <td>60min Hill ME workout</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>Travel/Prep</td>
-                <td>AUTUMN 100 (50-100km easy)</td>
-                <td>Recovery or continue A100</td>
-                <td>C-Race: Centurion Autumn 100</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>7</td>
-                <td>20-26 Oct 2025</td>
-                <td>Recovery</td>
-                <td class="hours">5.0</td>
-                <td>REST</td>
-                <td>45min Easy recovery</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>45min Easy Z1</td>
-                <td>1:30 Easy Z1</td>
-                <td>1:30 Easy Z1-Z2</td>
-                <td>Post-race recovery</td>
-            </tr>
-            
-            <tr>
-                <td>8</td>
-                <td>27 Oct-2 Nov 2025</td>
-                <td>Base</td>
-                <td class="hours">9.5</td>
-                <td>REST</td>
-                <td>60min LT 2x15min @AnT</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>60min Easy Z1</td>
-                <td>3:00 Time on feet + hiking</td>
-                <td>3:30 Long Z1 + final hour Z2</td>
-                <td>Return to building</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>9</td>
-                <td>3-9 Nov 2025</td>
-                <td>Recovery</td>
-                <td class="hours">6.5</td>
-                <td>REST</td>
-                <td>45min Recovery + strides</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>45min Recovery</td>
-                <td>2:00 AeT Test</td>
-                <td>2:00 Easy Z1</td>
-                <td>AeT progress check</td>
-            </tr>
-            
-            <tr class="race-week">
-                <td>10</td>
-                <td>10-16 Nov 2025</td>
-                <td>C-Race</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min Easy recovery</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>45min Easy shakeout</td>
-                <td>Recovery/travel</td>
-                <td>Saturn Remembrance Run (6.5hr)</td>
-                <td>C-Race: Time-based practice</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>11</td>
-                <td>17-23 Nov 2025</td>
-                <td>Recovery</td>
-                <td class="hours">6.0</td>
-                <td>REST</td>
-                <td>45min Easy recovery</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>60min Easy Z1</td>
-                <td>2:00 Easy Z1</td>
-                <td>1:15 Easy Z1</td>
-                <td>Post-race recovery</td>
-            </tr>
-            
-            <tr>
-                <td>12</td>
-                <td>24-30 Nov 2025</td>
-                <td>Base</td>
-                <td class="hours">11.0</td>
-                <td>REST</td>
-                <td>60min AnT intervals 3x10min</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>60min Easy Z1</td>
-                <td>3:30 Varied terrain</td>
-                <td>4:30 Long steady Z1-Z2</td>
-                <td>End of base phase</td>
-            </tr>
-            
-            <!-- PHASE 2: SPECIFIC PREPARATION -->
-            <tr class="phase-header">
-                <td colspan="12">PHASE 2: SPECIFIC PREPARATION (Weeks 13-24)</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>13</td>
-                <td>1-7 Dec 2025</td>
-                <td>Recovery</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min Easy + strides</td>
-                <td>60min Z1</td>
-                <td>REST</td>
-                <td>60min Recovery</td>
-                <td>2:00 MAF Test + easy</td>
-                <td>2:00 Easy Z1</td>
-                <td>Transition week</td>
-            </tr>
-            
-            <tr>
-                <td>14</td>
-                <td>8-14 Dec 2025</td>
-                <td>Specific</td>
-                <td class="hours">11.5</td>
-                <td>REST</td>
-                <td>60min Recovery Z1</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>3:30 Steady Z2</td>
-                <td>5:00 12-Hour Sim (12 yards)</td>
-                <td>Major simulation</td>
-            </tr>
-            
-            <tr>
-                <td>15</td>
-                <td>15-21 Dec 2025</td>
-                <td>Specific</td>
-                <td class="hours">12.0</td>
-                <td>REST</td>
-                <td>60min Threshold 2x15min</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>2:00 Evening 6-8pm</td>
-                <td>4:00 Overnight 10pm-2am</td>
-                <td>4:00 Progressive long</td>
-                <td>Sleep deprivation</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>16</td>
-                <td>22-28 Dec 2025</td>
-                <td>Holiday</td>
-                <td class="hours">6.0</td>
-                <td>REST</td>
-                <td>60min Easy festive</td>
-                <td>REST (Xmas)</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>2:00 Social pace</td>
-                <td>2:00 Easy Z1</td>
-                <td>Holiday recovery</td>
-            </tr>
-            
-            <tr>
-                <td>17</td>
-                <td>29 Dec-4 Jan 2026</td>
-                <td>Specific</td>
-                <td class="hours">10.0</td>
-                <td>REST</td>
-                <td>60min ME hills</td>
-                <td>60min Z1 recovery</td>
-                <td>REST (NY)</td>
-                <td>60min Z2 steady</td>
-                <td>3:00 Backyard practice</td>
-                <td>4:00 Long Z1-Z2</td>
-                <td>New Year build</td>
-            </tr>
-            
-            <tr>
-                <td>18</td>
-                <td>5-11 Jan 2026</td>
-                <td>Specific</td>
-                <td class="hours">11.0</td>
-                <td>REST</td>
-                <td>60min Tempo intervals</td>
-                <td>60min Z1 recovery</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>3:30 Start-stop practice</td>
-                <td>4:30 Nutrition test q30min</td>
-                <td>Nutrition focus</td>
-            </tr>
-            
-            <tr>
-                <td>19</td>
-                <td>12-18 Jan 2026</td>
-                <td>Specific</td>
-                <td class="hours">12.0</td>
-                <td>REST</td>
-                <td>60min Recovery</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>4:00 Evening/night</td>
-                <td>5:00 Half-Day Challenge</td>
-                <td>12+ yards target</td>
-            </tr>
-            
-            <tr>
-                <td>20</td>
-                <td>19-25 Jan 2026</td>
-                <td>Peak 1</td>
-                <td class="hours">13.0</td>
-                <td>REST</td>
-                <td>60min Easy recovery</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>6:00 24hr Sim (Fri PM)</td>
-                <td>3:00 Easy endurance</td>
-                <td>2:00 Recovery walk/jog</td>
-                <td>Peak week #1</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>21</td>
-                <td>26 Jan-1 Feb 2026</td>
-                <td>Recovery</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min Easy + strides</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>2:00 Comfortable</td>
-                <td>2:00 Easy Z1</td>
-                <td>Post-peak recovery</td>
-            </tr>
-            
-            <tr>
-                <td>22</td>
-                <td>2-8 Feb 2026</td>
-                <td>Peak 2</td>
-                <td class="hours">14.0</td>
-                <td>REST</td>
-                <td>60min Recovery</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>7:00 30-Yard Challenge</td>
-                <td>4:00 Recovery endurance</td>
-                <td>Peak week #2</td>
-            </tr>
-            
-            <tr>
-                <td>23</td>
-                <td>9-15 Feb 2026</td>
-                <td>Peak 3</td>
-                <td class="hours">15.0</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>8:00 Dress Rehearsal</td>
-                <td>3:00 Easy steady</td>
-                <td>2:00 Recovery</td>
-                <td>Final peak</td>
-            </tr>
-            
-            <tr>
-                <td>24</td>
-                <td>16-22 Feb 2026</td>
-                <td>Consolidation</td>
-                <td class="hours">8.0</td>
-                <td>REST</td>
-                <td>60min Tempo touch</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>2:00 Yard pace</td>
-                <td>3:00 Long Easy</td>
-                <td>Consolidation</td>
-            </tr>
-            
-            <!-- PHASE 3: RACE INTEGRATION & TAPER -->
-            <tr class="phase-header">
-                <td colspan="12">PHASE 3: RACE INTEGRATION & TAPER (Weeks 25-36)</td>
-            </tr>
-            
-            <tr>
-                <td>25</td>
-                <td>23 Feb-1 Mar 2026</td>
-                <td>Maintain</td>
-                <td class="hours">10.0</td>
-                <td>REST</td>
-                <td>60min ME workout</td>
-                <td>60min Z1</td>
-                <td>REST</td>
-                <td>60min Z2</td>
-                <td>3:30 Backyard practice</td>
-                <td>3:30 Long Z1-Z2</td>
-                <td>Maintenance phase</td>
-            </tr>
-            
-            <tr>
-                <td>26</td>
-                <td>2-8 Mar 2026</td>
-                <td>Maintain</td>
-                <td class="hours">11.0</td>
-                <td>REST</td>
-                <td>60min Threshold</td>
-                <td>60min Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>4:00 Specific practice</td>
-                <td>4:00 Progressive long</td>
-                <td>Rhythm week</td>
-            </tr>
-            
-            <tr>
-                <td>27</td>
-                <td>9-15 Mar 2026</td>
-                <td>Maintain</td>
-                <td class="hours">12.0</td>
-                <td>REST</td>
-                <td>60min Quality work</td>
-                <td>60min Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>4:00 Race simulation</td>
-                <td>5:00 Long endurance</td>
-                <td>Final build</td>
-            </tr>
-            
-            <tr class="recovery-week">
-                <td>28</td>
-                <td>16-22 Mar 2026</td>
-                <td>Mini Taper</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min Easy + strides</td>
-                <td>60min Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>1:30 Relaxed</td>
-                <td>2:30 Easy Z1</td>
-                <td>Mini taper</td>
-            </tr>
-            
-            <tr class="race-week">
-                <td>29-30</td>
-                <td>23 Mar-5 Apr 2026</td>
-                <td>B-Race Option</td>
-                <td class="hours">Variable</td>
-                <td colspan="7">OPTION A: Phoenix 12-in-12 (26 Mar-6 Apr) - 3-6hrs daily<br>OPTION B: Continue regular training - 13hrs Week 29, 10hrs Week 30</td>
-                <td>Major B-race option</td>
-            </tr>
-            
-            <tr>
-                <td>31</td>
-                <td>6-12 Apr 2026</td>
-                <td>Taper</td>
-                <td class="hours">8.0</td>
-                <td>REST</td>
-                <td>60min + 3x5min yard pace</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>45min Easy</td>
-                <td>2:45 Easy + strides</td>
-                <td>2:30 Easy Z1-Z2</td>
-                <td>Taper begins</td>
-            </tr>
-            
-            <tr>
-                <td>32</td>
-                <td>13-19 Apr 2026</td>
-                <td>Taper</td>
-                <td class="hours">7.0</td>
-                <td>REST</td>
-                <td>60min + 4x3min yard pace</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>60min Easy</td>
-                <td>2:00 Relaxed</td>
-                <td>2:00 Easy Z1</td>
-                <td>Taper week 2</td>
-            </tr>
-            
-            <tr>
-                <td>33</td>
-                <td>20-26 Apr 2026</td>
-                <td>Taper</td>
-                <td class="hours">6.0</td>
-                <td>REST</td>
-                <td>60min Easy + strides</td>
-                <td>60min Easy Z1</td>
-                <td>REST</td>
-                <td>45min Easy</td>
-                <td>1:45 Easy pace</td>
-                <td>1:30 Easy Z1</td>
-                <td>Taper week 3</td>
-            </tr>
-            
-            <tr class="race-week">
-                <td>34</td>
-                <td>27 Apr-3 May 2026</td>
-                <td>C-Race</td>
-                <td class="hours">5.0</td>
-                <td>REST</td>
-                <td>45min + 3x2min yard pace</td>
-                <td>45min Easy Z1</td>
-                <td>REST</td>
-                <td>Track Wars XXVI (6hr)</td>
-                <td>REST/walk</td>
-                <td>60min Easy Z1</td>
-                <td>C-race: 40-50km easy</td>
-            </tr>
-            
-            <tr>
-                <td>35</td>
-                <td>4-10 May 2026</td>
-                <td>Final Taper</td>
-                <td class="hours">4.0</td>
-                <td>REST</td>
-                <td>45min Easy + 4x30s strides</td>
-                <td>45min Easy Z1</td>
-                <td>REST</td>
-                <td>30min Easy</td>
-                <td>60min Easy relaxed</td>
-                <td>60min Easy Z1</td>
-                <td>Final taper</td>
-            </tr>
-            
-            <tr class="race-week">
-                <td>36</td>
-                <td>11-17 May 2026</td>
-                <td>RACE WEEK</td>
-                <td class="hours">2.5</td>
-                <td>REST</td>
-                <td>30min + 3x30s yard pace</td>
-                <td>30min Easy walk/jog</td>
-                <td>REST/Travel</td>
-                <td>RED ONE BACKYARD ULTRA</td>
-                <td>-</td>
-                <td>45min Easy Z1</td>
-                <td>TARGET: 30+ yards!</td>
-            </tr>
+        <tbody id="trainingBody">
+            <!-- Table content will be generated by JavaScript -->
         </tbody>
     </table>
     
-    <h2>Training Zones Reference</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Zone</th>
-                <th>Heart Rate</th>
-                <th>Pace Range</th>
-                <th>Purpose</th>
-                <th>% of Training</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Z1 (Recovery)</td>
-                <td>128-144 bpm</td>
-                <td>10:28-13:07/mi</td>
-                <td>Recovery/Easy Aerobic</td>
-                <td>50-60%</td>
-            </tr>
-            <tr>
-                <td>Z2 (Aerobic)</td>
-                <td>145-155 bpm</td>
-                <td>10:00-10:28/mi</td>
-                <td>Aerobic Threshold</td>
-                <td>30-40%</td>
-            </tr>
-            <tr>
-                <td>Z3 (Tempo)</td>
-                <td>156-165 bpm</td>
-                <td>8:48-10:00/mi</td>
-                <td>Sub-AnT</td>
-                <td>5-10%</td>
-            </tr>
-            <tr>
-                <td>Z4 (Threshold)</td>
-                <td>166-180 bpm</td>
-                <td>8:25-8:48/mi</td>
-                <td>AnT/Lactate Threshold</td>
-                <td>&lt;5%</td>
-            </tr>
-            <tr>
-                <td>Z5 (VO2 Max)</td>
-                <td>181+ bpm</td>
-                <td>7:45-8:09/mi</td>
-                <td>Neuromuscular Power</td>
-                <td>&lt;2%</td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <h2>Key Sessions Legend</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Session Type</th>
-                <th>Description</th>
-                <th>Target Pace/HR</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Yard Pace</td>
-                <td>Backyard ultra race pace practice</td>
-                <td>8:30-8:45/mi</td>
-            </tr>
-            <tr>
-                <td>AeT Test</td>
-                <td>Aerobic threshold drift test (60min)</td>
-                <td>145 bpm steady</td>
-            </tr>
-            <tr>
-                <td>MAF Test</td>
-                <td>8x800m at aerobic threshold HR</td>
-                <td>145 bpm</td>
-            </tr>
+    <input type="file" id="fileInput" style="display: none;" accept=".json">
+
+<script>let completedWeeks=new Set();const STORAGE_KEY='backyard_training_progress';const trainingPlan=[{week:1,dates:"8-14 Sep 2025",phase:"Testing",hours:6.0,type:"test-week",w1:"REST",w2:"60min Easy Z1 nose breathing",w3:"60min Easy Z1-Z2",w4:"REST",w5:"60min Recovery Z1",w6:"60min MAF Test",w7:"AeT Drift Test 60min",focus:"Baseline testing"},{week:2,dates:"15-21 Sep 2025",phase:"Base",hours:7.0,type:"normal",w1:"REST",w2:"60min Z1 + 6x30s hills",w3:"60min Z1 continuous",w4:"REST/30min walk",w5:"60min Z2 @145-150bpm",w6:"2:00 Fasted Z1",w7:"2:00 Long Z1/Z2",focus:"Fat adaptation"},{week:3,dates:"22-28 Sep 2025",phase:"Base",hours:7.5,type:"normal",w1:"REST",w2:"60min Hills 8x2min Z3",w3:"60min Z1 recovery",w4:"REST",w5:"1:15 Z2 @150-155bpm",w6:"2:00 Backyard Sim #1",w7:"2:15 Progressive",focus:"First backyard practice"},{week:4,dates:"29 Sep-5 Oct",phase:"Base",hours:8.0,type:"normal",w1:"REST",w2:"60min ME hill bounds",w3:"60min Z1 recovery",w4:"REST",w5:"60min AnT Test",w6:"2:30 Time on feet",w7:"2:30 Long Z1-Z2",focus:"AnT testing"},{week:5,dates:"6-12 Oct 2025",phase:"C-Race",hours:6.0,type:"race-week",w1:"REST",w2:"45min Easy + strides",w3:"60min Easy Z1",w4:"REST",w5:"45min Shakeout",w6:"Manchester BYU (6-8 yards)",w7:"Recovery walk/jog",focus:"Backyard practice race"},{week:6,dates:"13-19 Oct 2025",phase:"Base",hours:8.5,type:"normal",w1:"REST",w2:"60min Hill ME",w3:"60min Z1 recovery",w4:"REST",w5:"1:30 Z2 @150-155bpm",w6:"2:00 Yard pace",w7:"3:00 Long progression",focus:"Building volume"},{week:7,dates:"20-26 Oct 2025",phase:"Base",hours:9.0,type:"normal",w1:"REST",w2:"60min 5x3min Z3-Z4",w3:"60min Z1 recovery",w4:"REST",w5:"60min Z2 steady",w6:"2:45 Backyard Sim #2",w7:"3:15 Ultra shuffle",focus:"Extended simulation"},{week:8,dates:"27 Oct-2 Nov",phase:"Base",hours:9.5,type:"normal",w1:"REST",w2:"60min LT 2x15min",w3:"60min Z1 recovery",w4:"REST",w5:"60min Easy Z1",w6:"3:00 Time on feet",w7:"3:30 Long Z1-Z2",focus:"Peak base volume"},{week:9,dates:"3-9 Nov 2025",phase:"Recovery",hours:6.5,type:"recovery-week",w1:"REST",w2:"45min Recovery",w3:"60min Easy Z1",w4:"REST",w5:"45min Recovery",w6:"2:00 AeT Test",w7:"2:00 Easy Z1",focus:"AeT progress check"},{week:10,dates:"10-16 Nov 2025",phase:"C-Race",hours:7.0,type:"race-week",w1:"REST",w2:"60min Easy recovery",w3:"60min Z1",w4:"REST",w5:"45min Shakeout",w6:"Recovery/travel",w7:"Saturn 6.5hr Race",focus:"Time-based race"},{week:11,dates:"17-23 Nov 2025",phase:"Recovery",hours:6.0,type:"recovery-week",w1:"REST",w2:"45min Easy",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"2:00 Easy Z1",w7:"1:15 Easy",focus:"Post-race recovery"},{week:12,dates:"24-30 Nov 2025",phase:"Base",hours:11.0,type:"normal",w1:"REST",w2:"60min AnT 3x10min",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"3:30 Varied terrain",w7:"4:30 Long steady",focus:"End base phase"},{week:13,dates:"1-7 Dec 2025",phase:"Recovery",hours:7.0,type:"recovery-week",w1:"REST",w2:"60min Easy + strides",w3:"60min Z1",w4:"REST",w5:"60min Recovery",w6:"2:00 MAF Test",w7:"2:00 Easy Z1",focus:"Transition week"},{week:14,dates:"8-14 Dec 2025",phase:"Specific",hours:11.5,type:"normal",w1:"REST",w2:"60min Recovery",w3:"60min Easy Z1",w4:"REST",w5:"60min Easy",w6:"3:30 Steady Z2",w7:"5:00 12-Hour Sim",focus:"Major simulation"},{week:15,dates:"15-21 Dec 2025",phase:"Specific",hours:12.0,type:"normal",w1:"REST",w2:"60min Threshold",w3:"60min Z1",w4:"REST",w5:"2:00 Evening run",w6:"4:00 Overnight 10pm-2am",w7:"4:00 Progressive",focus:"Sleep deprivation"},{week:16,dates:"22-28 Dec 2025",phase:"Holiday",hours:6.0,type:"recovery-week",w1:"REST",w2:"60min Easy festive",w3:"REST (Xmas)",w4:"60min Easy Z1",w5:"REST",w6:"2:00 Social pace",w7:"2:00 Easy Z1",focus:"Holiday recovery"},{week:17,dates:"29 Dec-4 Jan",phase:"Specific",hours:10.0,type:"normal",w1:"REST",w2:"60min ME hills",w3:"60min Z1",w4:"REST (NY)",w5:"60min Z2",w6:"3:00 Backyard practice",w7:"4:00 Long Z1-Z2",focus:"New Year build"},{week:18,dates:"5-11 Jan 2026",phase:"Specific",hours:11.0,type:"normal",w1:"REST",w2:"60min Tempo",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"3:30 Start-stop",w7:"4:30 Nutrition q30min",focus:"Nutrition testing"},{week:19,dates:"12-18 Jan 2026",phase:"Specific",hours:12.0,type:"normal",w1:"REST",w2:"60min Recovery",w3:"60min Easy Z1",w4:"REST",w5:"60min Easy",w6:"4:00 Evening/night",w7:"5:00 Half-Day Challenge",focus:"12+ yards target"},{week:20,dates:"19-25 Jan 2026",phase:"Peak 1",hours:13.0,type:"normal",w1:"REST",w2:"60min Recovery",w3:"60min Easy Z1",w4:"REST",w5:"6:00 24hr Sim",w6:"3:00 Easy",w7:"2:00 Recovery",focus:"Peak week #1"},{week:21,dates:"26 Jan-1 Feb",phase:"Recovery",hours:7.0,type:"recovery-week",w1:"REST",w2:"60min Easy + strides",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"2:00 Comfortable",w7:"2:00 Easy Z1",focus:"Post-peak recovery"},{week:22,dates:"2-8 Feb 2026",phase:"Peak 2",hours:14.0,type:"normal",w1:"REST",w2:"60min Recovery",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"7:00 30-Yard Challenge",w7:"4:00 Recovery",focus:"Peak week #2"},{week:23,dates:"9-15 Feb 2026",phase:"Peak 3",hours:15.0,type:"normal",w1:"REST",w2:"60min Easy",w3:"60min Z1",w4:"REST",w5:"8:00 Dress Rehearsal",w6:"3:00 Easy",w7:"2:00 Recovery",focus:"Final peak"},{week:24,dates:"16-22 Feb 2026",phase:"Consolidation",hours:8.0,type:"normal",w1:"REST",w2:"60min Tempo touch",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"2:00 Yard pace",w7:"3:00 Long Easy",focus:"Consolidation"},{week:25,dates:"23 Feb-1 Mar",phase:"Maintain",hours:10.0,type:"normal",w1:"REST",w2:"60min ME workout",w3:"60min Z1",w4:"REST",w5:"60min Z2",w6:"3:30 Backyard practice",w7:"3:30 Long Z1-Z2",focus:"Maintenance"},{week:26,dates:"2-8 Mar 2026",phase:"Maintain",hours:11.0,type:"normal",w1:"REST",w2:"60min Threshold",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"4:00 Specific",w7:"4:00 Progressive",focus:"Rhythm week"},{week:27,dates:"9-15 Mar 2026",phase:"Maintain",hours:12.0,type:"normal",w1:"REST",w2:"60min Quality",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"4:00 Race sim",w7:"5:00 Long endurance",focus:"Final build"},{week:28,dates:"16-22 Mar 2026",phase:"Mini Taper",hours:7.0,type:"recovery-week",w1:"REST",w2:"60min Easy + strides",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"1:30 Relaxed",w7:"2:30 Easy Z1",focus:"Mini taper"},{week:29,dates:"23-29 Mar 2026",phase:"B-Race",hours:13.0,type:"race-week",w1:"Phoenix",w2:"12-in-12",w3:"Optional",w4:"3-6hrs",w5:"daily",w6:"or regular",w7:"training",focus:"Optional B-race Week 1"},{week:30,dates:"30 Mar-5 Apr",phase:"B-Race",hours:10.0,type:"race-week",w1:"Phoenix",w2:"12-in-12",w3:"Continued",w4:"3-6hrs",w5:"daily",w6:"or regular",w7:"training",focus:"Optional B-race Week 2"},{week:31,dates:"6-12 Apr 2026",phase:"Taper",hours:8.0,type:"normal",w1:"REST",w2:"60min + 3x5min pace",w3:"60min Z1",w4:"REST",w5:"45min Easy",w6:"2:45 Easy + strides",w7:"2:30 Easy Z1-Z2",focus:"Taper begins"},{week:32,dates:"13-19 Apr 2026",phase:"Taper",hours:7.0,type:"normal",w1:"REST",w2:"60min + 4x3min pace",w3:"60min Z1",w4:"REST",w5:"60min Easy",w6:"2:00 Relaxed",w7:"2:00 Easy Z1",focus:"Taper week 2"},{week:33,dates:"20-26 Apr 2026",phase:"Taper",hours:6.0,type:"normal",w1:"REST",w2:"60min + strides",w3:"60min Z1",w4:"REST",w5:"45min Easy",w6:"1:45 Easy pace",w7:"1:30 Easy Z1",focus:"Taper week 3"},{week:34,dates:"27 Apr-3 May",phase:"C-Race",hours:5.0,type:"race-week",w1:"REST",w2:"45min + 3x2min",w3:"45min Z1",w4:"REST",w5:"Track Wars 6hr",w6:"REST/walk",w7:"60min Easy",focus:"Final tune-up"},{week:35,dates:"4-10 May 2026",phase:"Final Taper",hours:4.0,type:"normal",w1:"REST",w2:"45min + 4x30s strides",w3:"45min Z1",w4:"REST",w5:"30min Easy",w6:"60min Easy relaxed",w7:"60min Easy Z1",focus:"Final taper"},{week:36,dates:"11-17 May 2026",phase:"RACE WEEK",hours:2.5,type:"race-week",w1:"REST",w2:"30min + 3x30s pace",w3:"30min walk/jog",w4:"REST/Travel",w5:"RED ONE BYU!",w6:"-",w7:"45min Easy",focus:"TARGET: 30+ yards!"}];function addPhaseHeader(tbody,text){const row=tbody.insertRow();row.className='phase-header';const cell=row.insertCell();cell.colSpan=13;cell.textContent=text;}function toggleWeek(weekNum,hours){if(completedWeeks.has(weekNum)){completedWeeks.delete(weekNum);}else{completedWeeks.add(weekNum);}saveToStorage();buildTable();}function updateProgress(){const total=trainingPlan.length;const completed=completedWeeks.size;const percentage=Math.round((completed/total)*100);document.getElementById('progressBar').style.width=percentage+'%';document.getElementById('progressBar').textContent=percentage+'% Complete';document.getElementById('weeksComplete').textContent=completed+'/'+total;let totalHours=0;completedWeeks.forEach(weekNum=>{const week=trainingPlan.find(w=>w.week.toString()===weekNum);if(week&&week.hours){totalHours+=parseFloat(week.hours);}});document.getElementById('totalHours').textContent=totalHours.toFixed(1);const raceDate=new Date('2026-05-15');const today=new Date();const daysToRace=Math.ceil((raceDate-today)/(1000*60*60*24));document.getElementById('daysToRace').textContent=daysToRace>0?daysToRace:'RACE DAY!';document.getElementById('currentWeek').textContent='Week '+Math.min(36,Math.max(1,Math.floor((today-new Date('2025-09-08'))/(7*24*60*60*1000))+1));}function buildTable(){const tbody=document.getElementById('trainingBody');tbody.innerHTML='';trainingPlan.forEach((week,index)=>{if(index===0){addPhaseHeader(tbody,"PHASE 1: AEROBIC BASE BUILDING (Weeks 1-12)");}else if(index===12){addPhaseHeader(tbody,"PHASE 2: SPECIFIC PREPARATION (Weeks 13-24)");}else if(index===24){addPhaseHeader(tbody,"PHASE 3: RACE INTEGRATION & TAPER (Weeks 25-36)");}const row=tbody.insertRow();const weekNum=week.week.toString();const isCompleted=completedWeeks.has(weekNum);if(isCompleted){row.classList.add('completed-row');}if(week.type){row.classList.add(week.type);}const checkCell=row.insertCell();checkCell.className='checkbox-cell';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.className='week-checkbox';checkbox.dataset.week=weekNum;checkbox.dataset.hours=week.hours;checkbox.checked=isCompleted;checkbox.onchange=()=>toggleWeek(weekNum,week.hours);checkCell.appendChild(checkbox);row.insertCell().textContent=weekNum;row.insertCell().textContent=week.dates;row.insertCell().textContent=week.phase;row.insertCell().innerHTML='<span class="hours">'+week.hours+'</span>';row.insertCell().textContent=week.w1;row.insertCell().textContent=week.w2;row.insertCell().textContent=week.w3;row.insertCell().textContent=week.w4;row.insertCell().textContent=week.w5;row.insertCell().textContent=week.w6;row.insertCell().textContent=week.w7;row.insertCell().textContent=week.focus;});updateProgress();}function saveToStorage(){try{const data={completedWeeks:Array.from(completedWeeks),savedDate:new Date().toISOString()};localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){console.log('Could not save to localStorage:',e);}}function loadFromStorage(){try{const stored=localStorage.getItem(STORAGE_KEY);if(stored){const data=JSON.parse(stored);completedWeeks=new Set(data.completedWeeks);}}catch(e){console.log('Could not load from localStorage:',e);}}function downloadProgress(){const data={completedWeeks:Array.from(completedWeeks),savedDate:new Date().toISOString(),athlete:"Backyard Ultra Training",race:"Red One BYU - 15 May 2026"};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='training_progress_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);}function uploadProgress(){document.getElementById('fileInput').click();}function clearAll(){if(confirm('Are you sure you want to clear all progress? This cannot be undone.')){completedWeeks.clear();saveToStorage();buildTable();}}function exportToCSV(){let csv='Week,Dates,Phase,Hours,Workout 1,Workout 2,Workout 3,Workout 4,Workout 5,Workout 6,Workout 7,Focus,Completed\n';trainingPlan.forEach(week=>{const completed=completedWeeks.has(week.week.toString())?'Yes':'No';csv+='"'+week.week+'","'+week.dates+'","'+week.phase+'","'+week.hours+'",';csv+='"'+week.w1+'","'+week.w2+'","'+week.w3+'","'+week.w4+'",';csv+='"'+week.w5+'","'+week.w6+'","'+week.w7+'","'+week.focus+'","'+completed+'"\n';});const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='backyard_training_plan.csv';a.click();URL.revokeObjectURL(url);}function refreshTable(){buildTable();}document.getElementById('fileInput').addEventListener('change',function(e){const file=e.target.files[0];if(file){const reader=new FileReader();reader.onload=function(event){try{const data=JSON.parse(event.target.result);completedWeeks=new Set(data.completedWeeks);saveToStorage();buildTable();alert('Progress loaded successfully!');}catch(error){alert('Error loading file. Please check the file format.');}};reader.readAsText(file);}});if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){loadFromStorage();buildTable();});}else{loadFromStorage();buildTable();}</script>
+</body>
+</html>
